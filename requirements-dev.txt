@@ -1,0 +1,6 @@
+# Bootstrap/verification dependencies (tools/): download tflite models and
+# convert them to ONNX. Only needed when pretrained/ is empty or to re-verify.
+-r requirements.txt
+tensorflow-cpu>=2.21        # tflite interpreter + tf2onnx backend
+tf2onnx>=1.17
+onnx>=1.22

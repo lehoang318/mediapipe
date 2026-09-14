@@ -1,0 +1,16 @@
+{
+  "pretrained_dir": "pretrained",
+  "video": {
+    "fallback_fps": 30.0
+  },
+  "camera": {
+    "fps": 30.0
+  },
+  "face": {
+    "min_score": 0.7,
+    "nms_iou": 0.5
+  },
+  "display": {
+    "window": "face_framework (q quit | space pause)"
+  }
+}

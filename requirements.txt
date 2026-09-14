@@ -1,0 +1,4 @@
+# Runtime dependencies: run the face framework (main.py) on the ONNX models.
+onnxruntime-gpu>=1.30
+numpy>=2.0
+opencv-python==5.0.0.93     # full build (QT GUI) for cv2.imshow preview
