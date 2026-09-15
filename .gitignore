@@ -1,6 +1,19 @@
+# Python
 __pycache__/
 *.py[cod]
 .venv/
 .pipcache/
+.pytest_cache/
+.mypy_cache/
 *.part
+
+# Generated models (tflite + onnx + task bundle)
 pretrained/
+
+# C++ build tree
+cpp/build/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store

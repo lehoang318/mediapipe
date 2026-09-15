@@ -70,11 +70,82 @@ python -m faceframework.face_pipeline --image pretrained/portrait.jpg \
 
 ### Tools
 
+Three standalone scripts handle the models. The download step needs no
+TensorFlow; the other two need the dev dependencies
+(`pip install -r requirements-dev.txt`).
+
+1. Download the official MediaPipe models (tflite):
+
+   ```bash
+   python -m tools.download_models                # into pretrained/
+   python -m tools.download_models --test-image   # also fetches portrait.jpg
+   ```
+
+   - `--models-dir DIR` — target directory (default `pretrained/`)
+   - `--test-image` — additionally downloads the sample face image
+   - Fetches the two BlazeFace detectors and `face_landmarker.task`, and
+     extracts `face_landmarks_detector.tflite` from the task bundle;
+     already-present files are skipped.
+
+2. Convert tflite -> ONNX (requires tensorflow-cpu + tf2onnx):
+
+   ```bash
+   python -m tools.convert_to_onnx
+   ```
+
+   - `--models-dir DIR` — directory with the tflite models (default `pretrained/`)
+   - `--opset N` — ONNX opset version (default 16)
+   - Converts both detectors and the landmarker next to the tflite files; if a
+     tflite file is missing it errors with a reminder to run the download
+     script first.
+
+3. Check ONNX numerically matches tflite (optional):
+
+   ```bash
+   python -m tools.verify_parity [--models-dir DIR] [--atol F] [--seed N]
+   ```
+
+The steps are independent commands; `python main.py` runs download +
+conversion automatically on first run when ONNX files are missing.
+
+## C++ port
+
+`cpp/` is a C++17 port of the display app (`main.py` + `faceframework`): it
+detects the biggest face with score >= the threshold, extracts the 478
+landmarks and shows the same 14-point overlay, HUD, pause/resume and exit
+summary. It shares the ONNX models in `pretrained/` with the Python app.
+
+### Dependencies
+
+The C++ port does not bundle its dependencies; install them beforehand:
+
+- C++17 compiler and CMake >= 3.16
+- OpenCV built with the `core`, `imgproc`, `imgcodecs`, `videoio` and
+  `highgui` modules (GUI display needs a toolkit such as GTK)
+- ONNX Runtime **GPU** (shared libraries, CUDA Execution Provider)
+- CUDA + cuDNN runtime libraries for the GPU provider
+
+By default CMake picks up OpenCV through `find_package` (point it elsewhere
+with `-DOpenCV_DIR=...`) and ONNX Runtime from `$HOME/.local` (override with
+`-DORT_ROOT=...`).
+
+### Build and run
+
 ```bash
-python -m tools.download_models [--test-image]     # fetch tflite models
-python -m tools.convert_to_onnx                    # tflite -> onnx
-python -m tools.verify_parity                      # tflite vs onnx parity
+cmake -S cpp -B cpp/build && cmake --build cpp/build -j
+
+cpp/build/face_video --pretrained pretrained --video /path/to/clip.mp4
+cpp/build/face_video --pretrained pretrained --camera 0
+cpp/build/face_video --pretrained pretrained --video clip.mp4 --far
 ```
+
+`--pretrained` is required; pass `--video` or `--camera` (`--camera` wins when
+both are given), and `--far` selects the full-range detector for faces beyond
+~2 m. Controls are the same as the Python app: `q` quits, `space` pauses.
+Thresholds are configurable via `--min-score`/`--nms-iou`; use `--cpu` to
+force the CPU provider, `--no-display` for headless benchmarking and
+`--max-frames N` to stop after N frames — the run then ends with per-stage
+latency histograms and a summary.
 
 ## Dependencies
 
